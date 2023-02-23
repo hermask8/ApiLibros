@@ -152,6 +152,63 @@ namespace ApiLibros.Controllers
 
         }
 
+        [HttpPut]
+        [Produces("application/json")]
+        [Route("update_user/{id}")]
+        public ActionResult actualizarPersona(JObject request, int id)
+        {
+            try
+            {
+                using (MySqlConnection conn = new MySqlConnection(_connectionString))
+                {
+                    dynamic data; //sirve para devolver una respuesta
+                    using (MySqlCommand cmd = new MySqlCommand("proc_persona", conn))
+                    {
+                        cmd.CommandType = CommandType.StoredProcedure;
+
+                        cmd.Parameters.AddWithValue("@first_name", request.GetValue("nombre").ToString());
+                        cmd.Parameters.AddWithValue("@last_name", request.GetValue("apellido").ToString());
+                        cmd.Parameters.AddWithValue("@birth_date", null);
+                        cmd.Parameters.AddWithValue("@gender", Int32.Parse(request.GetValue("genero").ToString()));
+                        cmd.Parameters.AddWithValue("@status", null);
+                        cmd.Parameters.AddWithValue("@edit_date", null);
+                        cmd.Parameters.AddWithValue("@option_control", 3);
+
+                        conn.Open();
+                        DataSet setter = new DataSet();
+                        MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
+                        adapter.Fill(setter, "documento");
+
+
+                        if (setter.Tables["documento"].Rows.Count > 0 || setter != null)
+                        {
+                            data = new JObject();
+                            data.response = 4;
+                            data.message = setter.Tables[0].Rows[0][0];
+                            return Ok(data);
+                        }
+                        else
+                        {
+                            data = new JObject();
+                            data.value = 0;
+                            data.response = 4;
+                            data.message = setter.Tables[0].Rows[0][0];
+                            return BadRequest(data);
+                        }
+                    }
+
+                }
+
+            }
+            catch (Exception ex)
+            {
+                dynamic data = new JObject();
+                data.value = ex.ToString();
+                data.response = 6;
+                data.message = "Proceso no realizado, excepcion";
+                return BadRequest(data);
+            }
+        }
 
 
 
@@ -168,9 +225,8 @@ namespace ApiLibros.Controllers
 
 
 
-
-            // GET: api/<UserController>
-            [HttpGet]
+        // GET: api/<UserController>
+        [HttpGet]
         public IEnumerable<string> Get()
         {
             return new string[] { "value1", "value2" };
